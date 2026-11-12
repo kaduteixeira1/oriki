@@ -2,18 +2,11 @@
 
 API Flask + PostgreSQL do Oriki, fases F0–F5 do plano técnico do projeto.
 
-O app do batedor fica em outro repositório: [oriki-front](https://github.com/kaduteixeira1/oriki-front).
-Para rodar os dois juntos, clone lado a lado, com as pastas `backend` e `frontend` (o Flask procura o build
-do React em `../frontend/dist`; outro caminho vai em `FRONTEND_DIST` no `.env`):
-
-```bash
-git clone https://github.com/kaduteixeira1/oriki-back.git backend
-git clone https://github.com/kaduteixeira1/oriki-front.git frontend
-```
-
-O código do firmware (ESP32 e a demonstração do Tinkercad) fica fora deste repositório, junto com a bancada
-virtual que roda o `.ino` no PC (pasta `simulador/`, ao lado de `backend/` e `frontend/`; veja o README dela). O contrato com ele
-está em `app/assinatura.py` e `app/contrato.py`, e `tests/dados/` guarda saídas reais do Monitor serial.
+Faz parte do repositório [oriki](https://github.com/kaduteixeira1/oriki): o app fica em `../frontend` (o Flask
+serve o build dele, `../frontend/dist`; outro caminho vai em `FRONTEND_DIST` no `.env`) e o firmware com a
+bancada virtual que o roda no PC fica em `../simulador`. Para subir tudo de uma vez, siga o
+[README principal](../README.md). O contrato com o firmware está em `app/assinatura.py` e `app/contrato.py`,
+e `tests/dados/` guarda saídas reais do Monitor serial.
 
 ## Rodar localmente
 
@@ -51,7 +44,7 @@ flask run                              # abra http://localhost:5000
 
 Uma página simples (`dev-console/`) com login, simulador do ESP32 assinando no navegador, telas do batedor,
 do fiscal e da página pública, e o JSON de cada resposta. Só para desenvolvimento: serve para testar o fiscal
-e a página pública enquanto essas telas não chegam ao oriki-front.
+e a página pública sem passar pelo app.
 
 ## Testes
 

@@ -2,13 +2,8 @@
 
 PWA do batedor em React 19 + Vite 6 + React Router 6, conforme o protótipo do Figma.
 
-A API fica em outro repositório: [oriki-back](https://github.com/kaduteixeira1/oriki-back). Clone os dois lado a
-lado, com as pastas `backend` e `frontend`, e siga o README do backend para subir a API e o banco:
-
-```bash
-git clone https://github.com/kaduteixeira1/oriki-back.git backend
-git clone https://github.com/kaduteixeira1/oriki-front.git frontend
-```
+Faz parte do repositório [oriki](https://github.com/kaduteixeira1/oriki): a API fica em `../backend`. Para subir
+a API e o banco, siga o [README principal](../README.md) ou o do [backend](../backend/README.md).
 
 Com a API rodando (`flask run` em `backend/`):
 
