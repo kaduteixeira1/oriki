@@ -138,6 +138,7 @@ class Dispositivo:
         self.placa = args.placa if args.placa != "auto" else detectar_placa(self.sketch)
         self.pinos = dict(PINOS_PADRAO[self.placa])
         self.api = args.api.rstrip("/")
+        self.backend = Path(args.backend).resolve()
         self.velocidade = args.velocidade
         self.tanque = Tanque()
         self.wifi = True
@@ -266,6 +267,26 @@ class Dispositivo:
             self.preparar_contador(contador_inicial)
         if getattr(self, "binario", None):
             self.ligar()
+
+    def recomecar_dados(self) -> dict:
+        """O botão "Recomeçar os dados": seed.py --recriar no backend e memória nova (contador 31)."""
+        pasta = self.backend
+        python = next((p for p in (pasta / ".venv" / "Scripts" / "python.exe", pasta / ".venv" / "bin" / "python")
+                       if p.exists()), Path(sys.executable))
+        if not (pasta / "seed.py").exists():
+            return {"erro": f"não achei {pasta / 'seed.py'} (use --backend com a pasta do backend)"}
+        try:
+            r = subprocess.run([str(python), "seed.py", "--recriar"], cwd=pasta, capture_output=True, text=True,
+                               timeout=120, encoding="utf-8", errors="replace")
+        except (OSError, subprocess.TimeoutExpired) as erro:
+            return {"erro": str(erro)}
+        if r.returncode != 0:
+            ultima = (r.stderr or r.stdout).strip().splitlines()[-1:] or ["erro desconhecido"]
+            self.evento("aviso", f"seed.py --recriar falhou: {ultima[0]}")
+            return {"erro": f"{ultima[0]} (o banco está ligado? o iniciar.bat precisa estar aberto)"}
+        self.evento("aviso", "Dados de exemplo recriados (seed.py --recriar).")
+        self.apagar_memoria(31)
+        return {"ok": True}
 
     def memoria_vazia(self) -> bool:
         return not any(p.is_file() for p in self.dados.rglob("*"))
@@ -537,6 +558,8 @@ class Dispositivo:
             self.envio_auto_s = int(dados.get("segundos") or 0)
         elif a == "reiniciar":
             self.reiniciar()
+        elif a == "recomecar_dados":
+            return self.recomecar_dados()
         elif a == "apagar_memoria":
             self.apagar_memoria(int(dados.get("contador_inicial") or 0) or None)
         elif a == "compilar":
@@ -686,6 +709,8 @@ def main() -> int:
                     help="pasta do sketch (padrão: firmware/oriki_esp32)")
     ap.add_argument("--placa", choices=["auto", "esp32", "uno"], default="auto")
     ap.add_argument("--api", default="http://127.0.0.1:5000", help="endereço da API do Oriki (backend Flask)")
+    ap.add_argument("--backend", default=str(Path(__file__).resolve().parent.parent / "backend"),
+                    help="pasta do backend (para o botão Recomeçar os dados)")
     ap.add_argument("--usar-url-do-firmware", action="store_true",
                     help="não troca o endereço que está no firmware pelo --api")
     ap.add_argument("--porta", type=int, default=8090, help="porta do painel")

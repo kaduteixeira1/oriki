@@ -38,6 +38,11 @@ Página do consumidor: http://localhost:5000/p/acai-da-dona-rosa
 
 ## Demonstração em 1 minuto
 
+No topo do painel da bancada, o quadro **Celular (app do Oriki)** abre o app (entre como Rosa), a página do
+consumidor pelo QR e o QR do Zé, cada um numa aba nova. Deixe a aba do app ao lado do painel. O botão
+**Recomeçar os dados** roda o `seed.py --recriar` e zera a memória do dispositivo, para começar a
+apresentação do zero.
+
 1. Na bancada, clique no **BOTÃO** (novo lote), espere o verde piscar, clique em **Mergulhar o cesto** e no
    **BOTÃO** de novo. Aos 10 s o buzzer apita: clique no **BOTÃO** para fechar o ciclo.
    Atalho: **Fazer um lote aprovado** (ou **reprovado**) no painel faz esse passo a passo inteiro num clique.

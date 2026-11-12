@@ -28,6 +28,9 @@
   .linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   button.b { height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--acai); background: #fff; color: var(--acai); font-weight: 600; cursor: pointer; }
   button.b:hover { background: var(--acai-claro); }
+  a.b { display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--acai); background: #fff; color: var(--acai); font-weight: 600; text-decoration: none; }
+  a.b.p { background: var(--acai); color: #fff; }
+  a.b:hover { filter: brightness(0.95); }
   button.p { background: var(--acai); color: #fff; }
   button.p:hover { background: var(--acai-escuro); }
   button.perigo { border-color: var(--erro); color: var(--erro); }
@@ -85,6 +88,23 @@
     <div id="erroCompilacao"></div>
     <div class="linha"><button class="b" onclick="mostrarAba('codigo')">Abrir o código</button>
       <button class="b p" onclick="acao({acao:'compilar'})">Compilar de novo</button></div>
+  </div>
+  <div class="card" id="cardCelular" style="margin-bottom:16px">
+    <h2>Celular (app do Oriki)</h2>
+    <div class="dica">Abra o app em outra aba, ao lado deste painel. Os lotes feitos aqui aparecem na tela inicial
+      da batedora em uns 20 s, sem recarregar. Senha de todas as contas: <code>oriki-dev-2026</code>
+      (rosa@exemplo.com, fiscal@exemplo.com, ze@exemplo.com).</div>
+    <div class="linha">
+      <a class="b p link-app" data-caminho="/login" target="_blank" rel="noopener">Abrir o app (entrar como Rosa ou fiscal)</a>
+      <a class="b link-app" data-caminho="/p/acai-da-dona-rosa?origem=qr" target="_blank" rel="noopener">Escanear o QR da Dona Rosa (consumidor)</a>
+      <a class="b link-app" data-caminho="/p/acai-do-ze?origem=qr" target="_blank" rel="noopener">QR do Zé</a>
+    </div>
+    <div class="dica">Internet do celular: na aba do app, aperte F12, aba <b>Network</b> (Rede), e troque
+      <b>No throttling</b> por <b>Offline</b>. Complete um lote e volte para <b>No throttling</b>: ele sobe sozinho.</div>
+    <div class="linha">
+      <button class="b perigo" id="btRecomecar">Recomeçar os dados (seed.py --recriar e memória nova)</button>
+      <span class="dica" id="recomecarEstado"></span>
+    </div>
   </div>
   <div class="grade">
     <div class="coluna">
@@ -245,6 +265,18 @@
 const $ = (id) => document.getElementById(id);
 let desde = 0, estado = null, editando = { sketch: null, nome: null }, audio = null, tomTocando = false;
 
+$('btRecomecar').onclick = async () => {
+  if (!confirm('Apagar os dados do banco e voltar ao seed.py (30 ciclos da Dona Rosa), e zerar a memória do dispositivo?')) return;
+  $('btRecomecar').disabled = true;
+  $('recomecarEstado').textContent = 'Recriando os dados...';
+  try {
+    const r = await acao({ acao: 'recomecar_dados' });
+    $('recomecarEstado').textContent = r.erro ? `Não deu certo: ${r.erro}` : 'Pronto. Recarregue a aba do app e entre de novo.';
+  } finally {
+    $('btRecomecar').disabled = false;
+  }
+};
+
 async function acao(dados) {
   const r = await fetch('/acao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
   return r.json();
@@ -378,6 +410,9 @@ function desenhar(e) {
   $('wifiEstado').textContent = !e.wifi ? 'roteador desligado' : e.placa === 'uno' ? 'sem Wi-Fi no Uno (ponte serial)' : e.wifi_conectado ? 'conectado' : 'desconectado';
   $('wifiEstado').className = 'chip ' + (e.wifi && (e.wifi_conectado || e.placa === 'uno') ? 'ok' : 'erro');
   if (document.activeElement !== $('api')) $('api').value = e.api;
+  // Links do quadro "Celular": mesmo endereço que o iniciar.bat abre (localhost), para usar a mesma sessão.
+  const baseApp = e.api.replace('://127.0.0.1', '://localhost');
+  document.querySelectorAll('.link-app').forEach((a) => { a.href = baseApp + a.dataset.caminho; });
   $('caixaPonte').classList.toggle('oculto', e.placa !== 'uno');
   $('ponte').checked = e.ponte_serial;
   if (document.activeElement !== $('envioAuto')) $('envioAuto').value = e.envio_auto_s;
