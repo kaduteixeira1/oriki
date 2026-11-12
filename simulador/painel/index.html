@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oriki · bancada do ESP32</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --acai: #5B2A6E; --acai-escuro: #3B1747; --acai-claro: #EFE6F3; --fundo: #F7F4F8; --sup: #fff;
+    --borda: #E4DDE8; --texto: #1F1A22; --texto-2: #6B6470; --ok: #17663F; --ok-f: #E3F3EA;
+    --erro: #B42318; --erro-f: #FDECEA; --alerta: #B54708; --alerta-f: #FEF3E2; --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/20px Inter, system-ui, sans-serif; color: var(--texto); background: var(--fundo); }
+  header { display: flex; align-items: center; gap: 16px; padding: 10px 20px; background: var(--acai); color: #fff; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 18px; }
+  header .info { font-size: 13px; opacity: .9; }
+  .abas { display: flex; gap: 4px; margin-left: auto; }
+  .abas button { background: transparent; border: 1px solid rgb(255 255 255 / .4); color: #fff; border-radius: 8px; padding: 6px 14px; cursor: pointer; font-weight: 600; }
+  .abas button.ativa { background: #fff; color: var(--acai); }
+  main { padding: 16px 20px; }
+  .grade { display: grid; grid-template-columns: minmax(300px, 380px) minmax(320px, 1fr) minmax(300px, 400px); gap: 16px; align-items: start; }
+  @media (max-width: 1100px) { .grade { grid-template-columns: 1fr; } }
+  .card { background: var(--sup); border: 1px solid var(--borda); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .card h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-2); }
+  .coluna { display: flex; flex-direction: column; gap: 16px; }
+  .linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button.b { height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--acai); background: #fff; color: var(--acai); font-weight: 600; cursor: pointer; }
+  button.b:hover { background: var(--acai-claro); }
+  button.p { background: var(--acai); color: #fff; }
+  button.p:hover { background: var(--acai-escuro); }
+  button.perigo { border-color: var(--erro); color: var(--erro); }
+  button:disabled { opacity: .5; cursor: default; }
+  input[type=range] { flex: 1; accent-color: var(--acai); }
+  input[type=text], input[type=number], select { height: 34px; border: 1px solid var(--borda); border-radius: 8px; padding: 0 8px; font: inherit; }
+  .grande { font-size: 40px; line-height: 44px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rot { color: var(--texto-2); font-size: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background: var(--acai-claro); color: var(--acai-escuro); }
+  .chip.ok { background: var(--ok-f); color: var(--ok); } .chip.erro { background: var(--erro-f); color: var(--erro); } .chip.alerta { background: var(--alerta-f); color: var(--alerta); }
+  .leds { display: flex; gap: 18px; align-items: center; }
+  .led { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--texto-2); }
+  .led i { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #0002; background: #ddd; transition: background .05s, box-shadow .05s; }
+  .led.verde.on i { background: #22c55e; box-shadow: 0 0 14px #22c55e; }
+  .led.vermelho.on i { background: #ef4444; box-shadow: 0 0 14px #ef4444; }
+  .led.laranja.on i { background: #f97316; box-shadow: 0 0 14px #f97316; }
+  .led.buzzer.on i { background: #facc15; box-shadow: 0 0 14px #facc15; }
+  #botaoFisico { width: 96px; height: 96px; border-radius: 50%; border: 6px solid #cfc4d6; background: radial-gradient(circle at 35% 30%, #8a4aa3, var(--acai-escuro)); color: #fff; font-weight: 700; cursor: pointer; user-select: none; touch-action: none; }
+  #botaoFisico.apertado { transform: scale(.94); border-color: var(--acai); }
+  #serial { height: 460px; overflow: auto; background: #1a1220; color: #e9e1ee; font: 12.5px/18px var(--mono); padding: 10px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+  #serial .aprov { color: #4ade80; } #serial .reprov { color: #f87171; } #serial .cmd { color: #c4b5fd; } #serial .env { color: #fbbf24; }
+  .http { font: 12px/16px var(--mono); border-top: 1px solid var(--borda); padding-top: 6px; }
+  .http summary { cursor: pointer; }
+  .http pre { white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow: auto; background: var(--fundo); padding: 6px; border-radius: 6px; }
+  #erroCompilacao { white-space: pre-wrap; font: 12px/16px var(--mono); background: var(--erro-f); color: var(--erro); padding: 10px; border-radius: 8px; max-height: 300px; overflow: auto; }
+  svg text { font-family: inherit; }
+  .editor { display: grid; grid-template-columns: 220px 1fr; gap: 16px; }
+  @media (max-width: 900px) { .editor { grid-template-columns: 1fr; } }
+  .arquivos button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; cursor: pointer; font: inherit; }
+  .arquivos button.ativo { background: var(--acai-claro); color: var(--acai-escuro); font-weight: 600; }
+  textarea#codigo { width: 100%; height: 70vh; font: 13px/19px var(--mono); border: 1px solid var(--borda); border-radius: 8px; padding: 10px; tab-size: 2; resize: vertical; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--borda); }
+  #logCenario { font: 12px/18px var(--mono); background: var(--fundo); padding: 8px; border-radius: 8px; max-height: 320px; overflow: auto; white-space: pre-wrap; }
+  .oculto { display: none !important; }
+  .dica { font-size: 12px; color: var(--texto-2); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Oriki · bancada virtual</h1>
+  <span class="info" id="info">conectando…</span>
+  <nav class="abas">
+    <button data-aba="bancada" class="ativa">Bancada</button>
+    <button data-aba="codigo">Código do firmware</button>
+    <button data-aba="testes">Testes</button>
+  </nav>
+</header>
+
+<main>
+<!-- ===================== BANCADA ===================== -->
+<section id="aba-bancada">
+  <div id="caixaErro" class="card oculto" style="margin-bottom:16px">
+    <h2>O firmware não compilou</h2>
+    <div id="erroCompilacao"></div>
+    <div class="linha"><button class="b" onclick="mostrarAba('codigo')">Abrir o código</button>
+      <button class="b p" onclick="acao({acao:'compilar'})">Compilar de novo</button></div>
+  </div>
+  <div class="grade">
+    <div class="coluna">
+      <div class="card">
+        <h2>Tanque de branqueamento</h2>
+        <svg viewBox="0 0 320 190" width="100%" aria-label="Tanque">
+          <rect x="40" y="30" width="240" height="140" rx="10" fill="#f2eef4" stroke="#8a7f90" stroke-width="3"/>
+          <rect id="agua" x="43" y="62" width="234" height="105" rx="6" fill="#7db7e8"/>
+          <g id="cesto"><rect x="120" y="8" width="80" height="54" rx="6" fill="none" stroke="#5B2A6E" stroke-width="3" stroke-dasharray="6 4"/>
+            <circle cx="138" cy="44" r="7" fill="#3B1747"/><circle cx="156" cy="48" r="7" fill="#3B1747"/><circle cx="174" cy="44" r="7" fill="#3B1747"/><circle cx="147" cy="32" r="7" fill="#3B1747"/><circle cx="166" cy="32" r="7" fill="#3B1747"/></g>
+          <rect x="58" y="60" width="6" height="95" fill="#6b6470"/><circle cx="61" cy="155" r="6" fill="#6b6470"/>
+          <path id="resistencia" d="M240 160 q8 -8 16 0 q8 8 16 0" stroke="#999" stroke-width="5" fill="none"/>
+          <text x="160" y="185" text-anchor="middle" font-size="12" fill="#6b6470" id="legendaTanque">sensor na lateral · resistência no fundo</text>
+        </svg>
+        <div class="linha" style="justify-content:space-between">
+          <div><div class="rot">Água</div><div class="grande" id="temp">--</div></div>
+          <div style="text-align:right"><div class="rot">Aquecedor</div><div id="aquecedorEstado" class="chip">--</div></div>
+        </div>
+        <div class="linha">
+          <button class="b p" id="btLoteAprovado">Fazer um lote aprovado</button>
+          <button class="b" id="btLoteReprovado">Fazer um lote reprovado</button>
+        </div>
+        <div class="dica">Um clique faz o lote inteiro, como o batedor: novo lote, cesto na água e toque no botão
+          aos 12 s (aprovado) ou aos 5 s (reprovado). Uns 10 s depois o dispositivo envia, e o lote aparece no app.</div>
+        <div class="linha">
+          <button class="b" id="btMergulhar">Mergulhar o cesto</button>
+          <button class="b" id="btRetirar">Tirar o cesto</button>
+        </div>
+        <div class="dica">Passo a passo: <b>BOTÃO</b> (novo lote) → esperar o verde piscar → <b>Mergulhar o cesto</b> →
+          <b>BOTÃO</b> (começa a contar) → apito dos 10 s → <b>BOTÃO</b> de novo para fechar o ciclo. Só tirar o cesto
+          não fecha o ciclo: sem o toque, ele fecha sozinho em 60 s.</div>
+        <label class="linha"><span style="width:110px">Termostato</span><input type="range" id="setpoint" min="60" max="98" step="0.5"><b id="setpointV" style="width:64px"></b></label>
+        <label class="linha"><span style="width:110px">Queda ao mergulhar</span><input type="range" id="queda" min="0" max="10" step="0.5"><b id="quedaV" style="width:64px"></b></label>
+        <div class="linha">
+          <label class="linha"><input type="checkbox" id="aquecedor"> aquecedor ligado</label>
+          <label class="linha"><input type="checkbox" id="sensor"> sensor conectado</label>
+        </div>
+        <div class="linha">
+          <label class="linha"><input type="checkbox" id="manualLigado"> temperatura fixa</label>
+          <input type="range" id="manual" min="20" max="100" step="0.1" disabled><b id="manualV" style="width:64px"></b>
+        </div>
+        <div class="linha">
+          <button class="b" onclick="acao({acao:'temperatura', valor:30})">Água fria (30 °C)</button>
+          <button class="b" onclick="acao({acao:'temperatura', valor:86})">Água quente (86 °C)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Dispositivo</h2>
+        <div class="linha" style="gap:24px">
+          <button id="botaoFisico" aria-label="Botão do dispositivo">BOTÃO</button>
+          <div class="leds">
+            <div class="led verde" id="ledVerde"><i></i>verde</div>
+            <div class="led vermelho" id="ledVermelho"><i></i>vermelho</div>
+            <div class="led laranja oculto" id="ledLaranja"><i></i>laranja</div>
+            <div class="led buzzer" id="ledBuzzer"><i></i>buzzer</div>
+          </div>
+        </div>
+        <div class="dica">Clique = toque rápido. Segure 5 s = modo termômetro (parado) ou cancelar o lote (preparando). Tecla <b>espaço</b> também aperta o botão.</div>
+        <label class="linha"><input type="checkbox" id="som"> tocar o buzzer no computador</label>
+        <div class="linha">
+          <button class="b" onclick="acao({acao:'reiniciar'})">Reiniciar (reset)</button>
+          <button class="b" onclick="acao({acao:'compilar'})">Compilar e ligar</button>
+          <button class="b perigo" onclick="if(confirm('Apagar a memória do dispositivo (fila, contador e relógio)?')) acao({acao:'apagar_memoria', contador_inicial: Number($('contadorInicial').value) || null})">Apagar memória</button>
+        </div>
+        <label class="linha dica">ao apagar, o próximo ciclo usa o contador <input type="number" id="contadorInicial" min="1" value="31" style="width:80px"> (31 continua os 30 ciclos do seed.py; 1 = dispositivo novo)</label>
+        <div class="dica" id="dadosDisp"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Monitor serial</h2>
+      <div id="serial"></div>
+      <form class="linha" id="formSerial">
+        <input type="text" id="entradaSerial" placeholder="ajuda, fila, enviar, adulterar 3, hora 2026-11-05 07:30:00…" style="flex:1" autocomplete="off">
+        <button class="b p">Enviar</button>
+        <button type="button" class="b" onclick="document.getElementById('serial').textContent=''">Limpar</button>
+      </form>
+      <div class="linha" id="atalhos"></div>
+    </div>
+
+    <div class="coluna">
+      <div class="card">
+        <h2>Rede</h2>
+        <div class="linha" style="justify-content:space-between">
+          <label class="linha"><input type="checkbox" id="wifi"> roteador Wi-Fi ligado</label>
+          <span id="wifiEstado" class="chip">--</span>
+        </div>
+        <label class="linha">API <input type="text" id="api" style="flex:1"><button class="b" id="btApi">Usar</button></label>
+        <div id="caixaPonte" class="oculto">
+          <label class="linha"><input type="checkbox" id="ponte"> ponte serial → API (o JSON do <code>enviar</code> vai para a API e volta <code>ok</code>)</label>
+          <label class="linha">envio automático a cada <input type="number" id="envioAuto" min="0" style="width:80px"> s (0 = desligado)</label>
+        </div>
+        <div class="dica">O endereço que está no firmware (ex.: https://oriki.exemplo/api/ciclos) é trocado por este, mantendo o caminho.</div>
+        <div id="http"></div>
+      </div>
+      <div class="card">
+        <h2>Relógio (RTC)</h2>
+        <div class="rot">Hora do PC (Belém): <b id="horaPc"></b></div>
+        <div class="linha">
+          <button class="b" onclick="acao({acao:'rtc', segundos:-600})">Atrasar 10 min</button>
+          <button class="b" onclick="acao({acao:'rtc', segundos:600})">Adiantar 10 min</button>
+        </div>
+        <div class="dica">O servidor marca "relógio divergente" se a hora do dispositivo estiver mais de 2 min fora e devolve a hora certa; o firmware do ESP32 corrige o RTC sozinho.</div>
+      </div>
+      <div class="card">
+        <h2>Eventos</h2>
+        <div id="eventos" style="font-size:12px;max-height:200px;overflow:auto"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CÓDIGO ===================== -->
+<section id="aba-codigo" class="oculto">
+  <div class="card" style="margin-bottom:16px">
+    <div class="linha">
+      <label class="linha">Sketch <select id="sketch"></select></label>
+      <label class="linha">Placa <select id="placa"><option value="">automática</option><option value="esp32">ESP32</option><option value="uno">Arduino Uno</option></select></label>
+      <button class="b p" id="btUsarSketch">Compilar e ligar este sketch</button>
+      <button class="b" id="btNovoSketch">Novo sketch (cópia do oriki_esp32)</button>
+    </div>
+    <div class="dica">Para usar o código de vocês: cole na aba <b>branqueamento.ino</b> (só o algoritmo do ciclo, seguindo o contrato no topo da aba) ou crie um sketch novo e cole o .ino inteiro. Os arquivos ficam em <code>simulador/firmware/</code> e abrem igual na IDE do Arduino.</div>
+  </div>
+  <div class="editor">
+    <div class="card arquivos" id="arquivos"></div>
+    <div class="card">
+      <div class="linha" style="justify-content:space-between"><b id="nomeArquivo"></b>
+        <span><span id="salvoEm" class="dica"></span> <button class="b" id="btSalvar">Salvar</button> <button class="b p" id="btSalvarCompilar">Salvar e compilar</button></span></div>
+      <textarea id="codigo" spellcheck="false"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TESTES ===================== -->
+<section id="aba-testes" class="oculto">
+  <div class="grade" style="grid-template-columns: minmax(300px, 420px) 1fr;">
+    <div class="card">
+      <h2>Testes do documento do projeto</h2>
+      <p class="dica">Rodam com o firmware ligado, usando o botão, o cesto, o aquecedor e o Wi-Fi como um operador faria. Para ir mais rápido, abra a bancada com <code>--velocidade 5</code>.</p>
+      <button class="b p" onclick="cenario('criterio')">Critério do ciclo (OR-26) · 30 ciclos</button>
+      <button class="b p" onclick="cenario('integridade')">Integridade (OR-25) · alterar e apagar</button>
+      <button class="b p" onclick="cenario('offline')">Sincronização offline (OR-24)</button>
+      <label class="linha">quantidade de ciclos (vazio = a do documento) <input type="number" id="qtdCenario" min="1" style="width:80px"></label>
+      <p class="dica">Integridade e offline conferem no servidor com o login do fiscal do seed (fiscal@exemplo.com).</p>
+    </div>
+    <div class="card">
+      <h2 id="tituloCenario">Resultado</h2>
+      <div id="resumoCenario"></div>
+      <div id="tabelaCenario"></div>
+      <div id="logCenario"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let desde = 0, estado = null, editando = { sketch: null, nome: null }, audio = null, tomTocando = false;
+
+async function acao(dados) {
+  const r = await fetch('/acao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
+  return r.json();
+}
+
+// ---------- abas ----------
+function mostrarAba(nome) {
+  document.querySelectorAll('.abas button').forEach((b) => b.classList.toggle('ativa', b.dataset.aba === nome));
+  ['bancada', 'codigo', 'testes'].forEach((a) => $('aba-' + a).classList.toggle('oculto', a !== nome));
+  if (nome === 'codigo') carregarArquivos($('sketch').value || estado?.nome);
+}
+document.querySelectorAll('.abas button').forEach((b) => b.onclick = () => mostrarAba(b.dataset.aba));
+
+// ---------- controles do tanque ----------
+let mexendo = {};
+for (const [id, a] of [['setpoint', 'setpoint'], ['queda', 'queda']]) {
+  $(id).oninput = () => { mexendo[id] = true; $(id + 'V').textContent = Number($(id).value).toFixed(1) + ' °C'; acao({ acao: a, valor: Number($(id).value) }); };
+  $(id).onchange = () => { mexendo[id] = false; };
+}
+$('manualLigado').onchange = () => { $('manual').disabled = !$('manualLigado').checked; acao({ acao: 'manual', valor: $('manualLigado').checked ? Number($('manual').value) : null }); };
+$('manual').oninput = () => { mexendo.manual = true; $('manualV').textContent = Number($('manual').value).toFixed(1) + ' °C'; acao({ acao: 'manual', valor: Number($('manual').value) }); };
+$('manual').onchange = () => { mexendo.manual = false; };
+$('aquecedor').onchange = () => acao({ acao: 'aquecedor', ligado: $('aquecedor').checked });
+$('sensor').onchange = () => acao({ acao: 'sensor', conectado: $('sensor').checked });
+$('wifi').onchange = () => acao({ acao: 'wifi', ligado: $('wifi').checked });
+$('ponte').onchange = () => acao({ acao: 'ponte', ligada: $('ponte').checked });
+$('envioAuto').onchange = () => acao({ acao: 'envio_auto', segundos: Number($('envioAuto').value) });
+$('btApi').onclick = () => acao({ acao: 'api', url: $('api').value });
+$('btMergulhar').onclick = () => acao({ acao: 'mergulhar' });
+$('btRetirar').onclick = () => acao({ acao: 'retirar' });
+for (const [id, resultado] of [['btLoteAprovado', 'aprovado'], ['btLoteReprovado', 'reprovado']]) {
+  $(id).onclick = async () => {
+    const r = await acao({ acao: 'lote_completo', resultado });
+    if (r.erro === 'ocupado') alert('Espere o lote (ou o teste) que está em andamento terminar.');
+  };
+}
+
+// ---------- botão físico (apertar e segurar) ----------
+const bt = $('botaoFisico');
+// Os pedidos saem em fila (apertar antes de soltar) e o toque dura pelo menos 120 ms: o firmware tem debounce de 30 ms.
+let apertado = false, filaBotao = Promise.resolve(), apertouEm = 0;
+function apertar(v) {
+  if (apertado === v) return;
+  apertado = v; bt.classList.toggle('apertado', v);
+  const espera = v ? 0 : Math.max(0, 120 - (performance.now() - apertouEm));
+  if (v) apertouEm = performance.now();
+  filaBotao = filaBotao.then(() => new Promise((ok) => setTimeout(ok, espera))).then(() => acao({ acao: 'botao', apertado: v }));
+}
+bt.addEventListener('pointerdown', (e) => { e.preventDefault(); bt.setPointerCapture(e.pointerId); apertar(true); });
+bt.addEventListener('pointerup', () => apertar(false));
+bt.addEventListener('pointercancel', () => apertar(false));
+document.addEventListener('keydown', (e) => { if (e.code === 'Space' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); apertar(true); } });
+document.addEventListener('keyup', (e) => { if (e.code === 'Space') apertar(false); });
+
+// ---------- serial ----------
+$('formSerial').onsubmit = (e) => { e.preventDefault(); const t = $('entradaSerial').value; if (!t) return; acao({ acao: 'serial', texto: t }); $('entradaSerial').value = ''; };
+for (const c of ['ajuda', 'fila', 'enviar', 'teste']) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'b'; b.textContent = c; b.onclick = () => acao({ acao: 'serial', texto: c }); $('atalhos').appendChild(b);
+}
+function classeLinha(l) {
+  if (/APROVADO/.test(l)) return 'aprov';
+  if (/REPROVADO|RECUSADO|ERRO/.test(l)) return 'reprov';
+  if (/^> /.test(l)) return 'cmd';
+  if (/Envio|ENVIO|Wi-Fi/.test(l)) return 'env';
+  return '';
+}
+let restoSerial = '';
+function anexarSerial(pedacos) {
+  if (!pedacos.length) return;
+  const caixa = $('serial');
+  const noFim = caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 40;
+  const texto = restoSerial + pedacos.join('');
+  const linhas = texto.split('\n');
+  restoSerial = linhas.pop();
+  const frag = document.createDocumentFragment();
+  for (const l of linhas) {
+    const d = document.createElement('div'); d.textContent = l.replace(/\r$/, '') || ' ';
+    const c = classeLinha(l); if (c) d.className = c; frag.appendChild(d);
+  }
+  caixa.appendChild(frag);
+  while (caixa.childNodes.length > 3000) caixa.removeChild(caixa.firstChild);
+  if (noFim) caixa.scrollTop = caixa.scrollHeight;
+}
+
+// ---------- som do buzzer ----------
+function tocarSom(ligado, freq) {
+  if (!$('som').checked) ligado = false;
+  if (ligado && !tomTocando) {
+    audio = audio || new AudioContext();
+    const osc = audio.createOscillator(); const g = audio.createGain(); g.gain.value = 0.05;
+    osc.frequency.value = freq || 2000; osc.connect(g).connect(audio.destination); osc.start();
+    tocarSom.osc = osc; tomTocando = true;
+  } else if (!ligado && tomTocando) { tocarSom.osc.stop(); tomTocando = false; }
+}
+
+// ---------- estado ----------
+function corDaAgua(t) {
+  const f = Math.max(0, Math.min(1, (t - 25) / 70));
+  return `rgb(${Math.round(125 + 120 * f)}, ${Math.round(183 - 90 * f)}, ${Math.round(232 - 150 * f)})`;
+}
+function quando(t) { return new Date(t * 1000).toLocaleTimeString('pt-BR'); }
+
+function desenhar(e) {
+  estado = e;
+  $('info').textContent = `${e.nome} · ${e.placa === 'uno' ? 'Arduino Uno' : 'ESP32'} · ${e.velocidade}x · ${e.rodando ? 'ligado' : 'desligado'}`;
+  const t = e.tanque;
+  $('temp').textContent = t.sensor_conectado ? t.temperatura.toFixed(1).replace('.', ',') + ' °C' : 'sem sensor';
+  $('temp').style.color = t.temperatura >= 80 ? 'var(--ok)' : 'var(--erro)';
+  $('agua').setAttribute('fill', corDaAgua(t.temperatura));
+  $('cesto').setAttribute('transform', t.cesto_dentro ? 'translate(0,70)' : 'translate(0,0)');
+  $('resistencia').setAttribute('stroke', t.esquentando ? '#ef4444' : '#999');
+  $('aquecedorEstado').textContent = !t.aquecedor ? 'desligado' : t.esquentando ? 'esquentando' : 'no termostato';
+  $('aquecedorEstado').className = 'chip ' + (t.esquentando ? 'alerta' : '');
+  if (!mexendo.setpoint) { $('setpoint').value = t.setpoint; $('setpointV').textContent = t.setpoint.toFixed(1) + ' °C'; }
+  if (!mexendo.queda) { $('queda').value = t.queda; $('quedaV').textContent = t.queda.toFixed(1) + ' °C'; }
+  $('aquecedor').checked = t.aquecedor; $('sensor').checked = t.sensor_conectado;
+  $('manualLigado').checked = t.manual !== null; $('manual').disabled = t.manual === null;
+  if (t.manual !== null && !mexendo.manual) { $('manual').value = t.manual; $('manualV').textContent = t.manual.toFixed(1) + ' °C'; }
+  $('btMergulhar').disabled = t.cesto_dentro; $('btRetirar').disabled = !t.cesto_dentro;
+
+  const p = e.pinos, s = e.saidas;
+  $('ledVerde').classList.toggle('on', !!s[p.verde]);
+  $('ledVermelho').classList.toggle('on', !!s[p.vermelho]);
+  $('ledLaranja').classList.toggle('oculto', p.laranja === null);
+  $('ledLaranja').classList.toggle('on', p.laranja !== null && !!s[p.laranja]);
+  $('ledBuzzer').classList.toggle('on', e.buzzer_ligado);
+  tocarSom(e.buzzer_ligado, e.tons[p.buzzer]);
+  $('dadosDisp').textContent = `Memória do dispositivo: ${e.dados}`;
+
+  $('wifi').checked = e.wifi;
+  $('wifiEstado').textContent = !e.wifi ? 'roteador desligado' : e.placa === 'uno' ? 'sem Wi-Fi no Uno (ponte serial)' : e.wifi_conectado ? 'conectado' : 'desconectado';
+  $('wifiEstado').className = 'chip ' + (e.wifi && (e.wifi_conectado || e.placa === 'uno') ? 'ok' : 'erro');
+  if (document.activeElement !== $('api')) $('api').value = e.api;
+  $('caixaPonte').classList.toggle('oculto', e.placa !== 'uno');
+  $('ponte').checked = e.ponte_serial;
+  if (document.activeElement !== $('envioAuto')) $('envioAuto').value = e.envio_auto_s;
+  $('horaPc').textContent = e.hora_pc;
+
+  const http = $('http'); http.innerHTML = '';
+  for (const h of e.http.slice().reverse()) {
+    const d = document.createElement('details'); d.className = 'http';
+    const ok = h.status === 200;
+    const resumo = h.status < 0 ? 'sem rede' : `HTTP ${h.status}` + (h.recebidos ? ` · ${h.recebidos.length} recebidos` : '') + (h.recusados?.length ? ` · ${h.recusados.length} recusados` : '');
+    d.innerHTML = `<summary><span class="chip ${ok && !h.recusados?.length ? 'ok' : 'erro'}">${resumo}</span> ${quando(h.t)} · ${h.origem} · ${h.n_ciclos ?? 0} ciclo(s)</summary>`;
+    const pre1 = document.createElement('pre'); pre1.textContent = 'POST ' + h.url + '\n' + h.corpo;
+    const pre2 = document.createElement('pre'); pre2.textContent = h.resposta;
+    d.append(pre1, pre2); http.appendChild(d);
+  }
+  $('eventos').innerHTML = e.eventos.slice().reverse().map((ev) => `<div><span class="rot">${quando(ev.t)}</span> ${ev.texto.replace(/</g, '&lt;')}</div>`).join('');
+
+  const c = e.compilacao;
+  $('caixaErro').classList.toggle('oculto', c.estado !== 'erro');
+  if (c.estado === 'erro') $('erroCompilacao').textContent = c.mensagem;
+  const sel = $('sketch');
+  if (sel.options.length !== e.sketches.length) {
+    sel.innerHTML = e.sketches.map((n) => `<option>${n}</option>`).join('');
+    sel.value = e.nome;
+  }
+}
+
+async function atualizar() {
+  try {
+    const r = await fetch('/estado?desde=' + desde);
+    const e = await r.json();
+    if (e.serial_proximo < desde) desde = 0;
+    anexarSerial(e.serial);
+    desde = e.serial_proximo;
+    desenhar(e);
+  } catch { $('info').textContent = 'bancada desligada'; }
+  setTimeout(atualizar, 150);
+}
+atualizar();
+
+// ---------- editor ----------
+async function carregarArquivos(sketch) {
+  if (!sketch) return;
+  const r = await (await fetch('/arquivos?sketch=' + encodeURIComponent(sketch))).json();
+  const caixa = $('arquivos'); caixa.innerHTML = '<h2>Abas</h2>';
+  for (const nome of r.arquivos) {
+    const b = document.createElement('button'); b.textContent = nome; b.onclick = () => abrir(sketch, nome);
+    if (editando.sketch === sketch && editando.nome === nome) b.className = 'ativo';
+    caixa.appendChild(b);
+  }
+  if (editando.sketch !== sketch) abrir(sketch, r.arquivos.includes('branqueamento.ino') ? 'branqueamento.ino' : r.arquivos[0]);
+}
+async function abrir(sketch, nome) {
+  const r = await (await fetch(`/arquivo?sketch=${encodeURIComponent(sketch)}&nome=${encodeURIComponent(nome)}`)).json();
+  editando = { sketch, nome }; $('codigo').value = r.conteudo ?? ''; $('nomeArquivo').textContent = `${sketch}/${nome}`; $('salvoEm').textContent = '';
+  carregarArquivos(sketch);
+}
+async function salvar() {
+  if (!editando.nome) return;
+  await fetch('/arquivo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...editando, conteudo: $('codigo').value }) });
+  $('salvoEm').textContent = 'salvo às ' + new Date().toLocaleTimeString('pt-BR');
+}
+$('btSalvar').onclick = salvar;
+$('btSalvarCompilar').onclick = async () => { await salvar(); await acao({ acao: 'compilar', sketch: editando.sketch, placa: $('placa').value || undefined }); mostrarAba('bancada'); };
+$('sketch').onchange = () => carregarArquivos($('sketch').value);
+$('btUsarSketch').onclick = async () => { await acao({ acao: 'compilar', sketch: $('sketch').value, placa: $('placa').value || undefined }); mostrarAba('bancada'); };
+$('btNovoSketch').onclick = async () => {
+  const nome = prompt('Nome do sketch (letras, números e _):', 'meu_branqueamento'); if (!nome) return;
+  const r = await (await fetch('/novo_sketch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome, copiar_de: 'oriki_esp32' }) })).json();
+  if (r.sketch) { const o = document.createElement('option'); o.textContent = r.sketch; $('sketch').appendChild(o); $('sketch').value = r.sketch; editando = {}; carregarArquivos(r.sketch); }
+};
+$('codigo').addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') { e.preventDefault(); const t = e.target, i = t.selectionStart; t.setRangeText('  ', i, t.selectionEnd, 'end'); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); salvar(); }
+});
+
+// ---------- cenários ----------
+async function cenario(nome) {
+  const quantidade = Number($('qtdCenario').value) || undefined;
+  const r = await acao({ acao: 'cenario', nome, quantidade });
+  if (r.erro === 'ja_rodando') alert('Já tem um teste rodando.');
+  acompanhar();
+}
+async function acompanhar() {
+  const e = await (await fetch('/cenario')).json();
+  $('tituloCenario').textContent = e.resultado?.titulo || (e.nome ? `Rodando: ${e.nome}` : 'Resultado');
+  $('logCenario').textContent = e.log.join('\n');
+  $('logCenario').scrollTop = $('logCenario').scrollHeight;
+  if (e.resultado) {
+    const r = e.resultado;
+    $('resumoCenario').innerHTML = `<p><span class="chip ${r.passou ? 'ok' : 'erro'}">${r.passou ? 'PASSOU' : 'NÃO PASSOU'}</span> Meta: ${r.meta} · Obtido: <b>${r.obtido}</b></p>${e.relatorio ? `<p class="dica">Relatório: ${e.relatorio}</p>` : ''}`;
+    const casos = r.casos || [];
+    if (casos.length) {
+      const chaves = Object.keys(casos[0]).filter((k) => k !== 'linha');
+      $('tabelaCenario').innerHTML = '<table><tr>' + chaves.map((k) => `<th>${k}</th>`).join('') + '</tr>' +
+        casos.map((c) => '<tr>' + chaves.map((k) => `<td>${c[k] === true ? '✔' : c[k] === false ? '✘' : c[k]}</td>`).join('') + '</tr>').join('') + '</table>';
+    }
+  } else { $('resumoCenario').innerHTML = ''; $('tabelaCenario').innerHTML = ''; }
+  if (e.rodando) setTimeout(acompanhar, 700);
+}
+acompanhar();
+</script>
+</body>
+</html>

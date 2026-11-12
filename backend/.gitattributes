@@ -1,0 +1,14 @@
+# Repositório sempre com LF; o Git converte na cópia de trabalho quando preciso.
+* text=auto eol=lf
+
+# Scripts do Windows precisam de CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binários
+*.pdf binary
+*.png binary
+*.jpg binary
+*.ttf binary
+*.woff binary
+*.woff2 binary

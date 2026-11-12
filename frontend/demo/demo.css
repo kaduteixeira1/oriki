@@ -1,0 +1,63 @@
+/* Moldura da demonstração (prefixo d-): o app continua com o estilo dele, dentro do celular. */
+body { background: #ece6ef; }
+.d-pagina { max-width: 1240px; margin: 0 auto; padding: 16px; font-family: Inter, system-ui, sans-serif; color: var(--texto); }
+.d-cabecalho h1 { margin: 0; font-size: 22px; line-height: 28px; color: var(--acai-escuro); }
+.d-cabecalho p { margin: 4px 0 16px; font-size: 14px; line-height: 20px; color: var(--texto-2); max-width: 760px; }
+.d-colunas { display: grid; grid-template-columns: 410px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .d-colunas { grid-template-columns: minmax(0, 1fr); } }
+.d-coluna-celular { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+
+.d-telefone { width: 390px; max-width: 100%; height: 780px; margin: 0 auto; border: 10px solid #1f1a22; border-radius: 36px;
+              overflow: hidden; background: var(--fundo); box-shadow: 0 12px 40px rgb(59 23 71 / 0.25); }
+.d-tela-app { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.d-tela-app .tela, .d-tela-app .tela-login { min-height: 100%; }
+.d-tela-app .botao-icone, .d-tela-app .botao-layout-login { display: none !important; }
+
+.d-bancada { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.d-card { background: #fff; border: 1px solid var(--borda); border-radius: 12px; padding: 16px; display: flex;
+          flex-direction: column; gap: 10px; }
+.d-aviso { background: var(--alerta-fundo); border-color: #f5d6ae; }
+.d-titulo { margin: 0; font-size: 12px; line-height: 16px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-2); font-weight: 700; }
+.d-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.d-entre { justify-content: space-between; }
+.d-direita { text-align: right; }
+.d-rotulo { font-size: 12px; color: var(--texto-2); }
+.d-rotulo-campo { font-size: 14px; color: var(--texto-2); min-width: 84px; }
+.d-grande { font-size: 36px; line-height: 40px; font-weight: 700; font-variant-numeric: tabular-nums; color: #2f5d8a; }
+.d-grande.d-quente { color: var(--sucesso); }
+.d-dica { margin: 0; font-size: 13px; line-height: 19px; color: var(--texto-2); }
+.d-dica code { background: var(--acai-claro); padding: 1px 5px; border-radius: 4px; }
+.d-check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+.d-check input { width: 18px; height: 18px; accent-color: var(--acai); }
+.d-tanque { width: 100%; max-height: 190px; }
+
+.d-botao { height: 36px; padding: 0 12px; border: 1px solid var(--acai); border-radius: 8px; background: #fff; color: var(--acai);
+           font: 600 13px/1 Inter, system-ui, sans-serif; cursor: pointer; }
+.d-botao:hover:not(:disabled) { background: var(--acai-claro); }
+.d-botao:disabled { opacity: 0.45; cursor: default; }
+.d-principal { background: var(--acai); color: #fff; }
+.d-principal:hover:not(:disabled) { background: var(--acai-escuro); }
+.d-perigo { border-color: var(--erro); color: var(--erro); align-self: flex-start; }
+.d-pequeno { height: 28px; font-size: 12px; }
+.d-chip { display: inline-block; padding: 3px 10px; border-radius: 12px; background: var(--acai-claro); color: var(--acai-escuro);
+          font-size: 12px; font-weight: 600; }
+.d-chip-laranja { background: var(--alerta-fundo); color: var(--alerta); }
+
+.d-dispositivo { gap: 20px; }
+.d-botao-fisico { width: 84px; height: 84px; border-radius: 50%; border: 6px solid #3b3340; background: #e4572e; color: #fff;
+                  font: 800 14px/1 Inter, system-ui, sans-serif; cursor: pointer; box-shadow: 0 4px 0 #8c2f15; touch-action: none; user-select: none; }
+.d-botao-fisico.apertado { transform: translateY(3px); box-shadow: 0 1px 0 #8c2f15; }
+.d-leds { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.d-led { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--texto-2); }
+.d-led i { width: 18px; height: 18px; border-radius: 50%; background: #d8d2dc; border: 2px solid #b9b0be; }
+.d-led-verde.aceso i { background: #22c55e; border-color: #15803d; box-shadow: 0 0 10px #22c55e; }
+.d-led-vermelho.aceso i { background: #ef4444; border-color: #b91c1c; box-shadow: 0 0 10px #ef4444; }
+.d-led-buzzer.aceso i { background: #facc15; border-color: #a16207; box-shadow: 0 0 10px #facc15; }
+
+.d-serial { margin: 0; height: 220px; overflow-y: auto; padding: 10px; border-radius: 8px; background: #1f1a22; color: #e9e3ec;
+            font: 12px/17px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; }
+.d-serial .aprov { color: #4ade80; } .d-serial .reprov { color: #f87171; } .d-serial .cmd { color: #c4b5fd; } .d-serial .env { color: #93c5fd; }
+.d-entrada { flex: 1; min-width: 160px; height: 36px; padding: 0 10px; border: 1px solid var(--borda-campo); border-radius: 8px; font: 13px Inter, system-ui, sans-serif; }
+.d-eventos { margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 20px; color: var(--texto-2); max-height: 200px; overflow-y: auto; }
+.d-eventos li + li { border-top: 1px solid var(--borda); }
+.d-card input[type=range] { accent-color: var(--acai); flex: 1; min-width: 120px; }

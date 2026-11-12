@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oriki — console de teste</title>
+<style>
+  :root { --borda: #d0d7de; --fundo: #f6f8fa; --ok: #1a7f37; --erro: #cf222e; --azul: #0969da; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, sans-serif; color: #1f2328; background: #fff; }
+  header { position: sticky; top: 0; z-index: 2; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+           padding: 10px 16px; background: #24292f; color: #fff; }
+  header h1 { margin: 0; font-size: 16px; }
+  header .sessao { margin-left: auto; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { border: 1px solid var(--borda); border-radius: 8px; padding: 12px 14px; }
+  section h2 { margin: 0 0 8px; font-size: 15px; }
+  .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+  label { display: inline-flex; gap: 4px; align-items: center; }
+  input[type=text], input[type=number], input[type=date], input[type=password], input[type=email] {
+    padding: 5px 7px; border: 1px solid var(--borda); border-radius: 6px; font: inherit; min-width: 0; }
+  button { padding: 5px 10px; border: 1px solid var(--borda); border-radius: 6px; background: var(--fundo);
+           font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--azul); }
+  button.primario { background: var(--azul); color: #fff; border-color: var(--azul); }
+  small, .dica { color: #59636e; }
+  #log { grid-column: 1 / -1; }
+  #saida { max-height: 520px; overflow: auto; margin: 0; }
+  .entrada { border-top: 1px solid var(--borda); padding: 6px 0; }
+  .entrada pre { margin: 4px 0 0; padding: 8px; background: var(--fundo); border-radius: 6px; overflow: auto;
+                 max-height: 260px; font-size: 12.5px; }
+  .s2 { color: var(--ok); font-weight: 600; } .s4, .s5 { color: var(--erro); font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td, th { border-bottom: 1px solid var(--borda); padding: 4px 6px; text-align: left; }
+  #lotes button { padding: 2px 8px; }
+  #qr img { width: 160px; height: 160px; border: 1px solid var(--borda); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Oriki · console de teste do backend</h1>
+  <span class="sessao" id="sessao">verificando sessão…</span>
+  <button id="btn-logout">Sair</button>
+</header>
+
+<main>
+  <section>
+    <h2>1. Login</h2>
+    <div class="linha">
+      <button data-login="rosa@exemplo.com">Entrar como batedora (Rosa)</button>
+      <button data-login="fiscal@exemplo.com">Entrar como fiscal</button>
+      <button data-login="admin@exemplo.com">Entrar como admin</button>
+    </div>
+    <div class="linha">
+      <input type="email" id="email" placeholder="e-mail" value="rosa@exemplo.com">
+      <input type="password" id="senha" placeholder="senha" value="oriki-dev-2026">
+      <button id="btn-login" class="primario">Entrar</button>
+    </div>
+    <small>Senha do seed: oriki-dev-2026. Só senha errada conta para o limite: erre 5 vezes e a 6ª tentativa recebe 429.</small>
+  </section>
+
+  <section>
+    <h2>2. Simulador do ESP32</h2>
+    <div class="linha">
+      <label>Dispositivo <input type="text" id="disp" value="ORK01" size="7"></label>
+      <label>Próximo contador <input type="number" id="contador" value="47" min="1" style="width:90px"></label>
+      <label>Qtd. <input type="number" id="qtd" value="3" min="0" max="50" style="width:60px"></label>
+    </div>
+    <div class="linha">
+      <label style="flex:1">Chave <input type="text" id="chave" placeholder="chave de 64 caracteres do dispositivo" style="flex:1;width:100%"></label>
+    </div>
+    <div class="linha">
+      <button id="sim-enviar" class="primario">Enviar ciclos</button>
+      <button id="sim-lacuna">Enviar pulando 2 (lacuna)</button>
+      <button id="sim-reprovado">Enviar 1 reprovado</button>
+      <button id="sim-adulterar">Enviar adulterado</button>
+      <button id="sim-repetir">Repetir último envio</button>
+      <button id="sim-relogio">Relógio 10 min atrasado</button>
+      <button id="sim-heartbeat">Heartbeat</button>
+    </div>
+    <small>Assina com HMAC-SHA256 no navegador, no mesmo contrato do firmware (seção 7). Não precisa de login.</small>
+  </section>
+
+  <section>
+    <h2>3. Batedor <small>(só perfil batedor)</small></h2>
+    <div class="linha">
+      <button id="bat-resumo" class="primario">Resumo do dia</button>
+      <button id="bat-historico">Histórico (30 dias)</button>
+      <button id="bat-qr">Mostrar QR</button>
+      <button id="bat-termo">Aceitar termo</button>
+    </div>
+    <div class="linha">
+      <label>De <input type="date" id="pdf-de"></label>
+      <label>Até <input type="date" id="pdf-ate"></label>
+      <button id="bat-pdf">Abrir relatório PDF</button>
+    </div>
+    <div id="lotes"></div>
+    <div id="form-lote" hidden>
+      <h3 style="font-size:14px;margin:10px 0 4px">Completar lote <span id="form-codigo"></span></h3>
+      <div class="linha">
+        <input type="text" id="f-origem" placeholder="origem do fruto" value="Ilha do Combu">
+        <input type="number" id="f-qtd" placeholder="rasas" value="3" step="0.5" style="width:80px">
+      </div>
+      <div class="linha">
+        <label><input type="checkbox" id="f-catacao" checked> catação</label>
+        <label><input type="checkbox" id="f-sanitizacao" checked> sanitização</label>
+        <label><input type="checkbox" id="f-resfriamento"> resfriamento</label>
+        <button id="f-salvar" class="primario">Salvar (PATCH)</button>
+      </div>
+    </div>
+    <div id="qr"></div>
+  </section>
+
+  <section>
+    <h2>4. Fiscal <small>(fiscal ou admin)</small></h2>
+    <div class="linha">
+      <button id="fis-alertas" class="primario">Alertas</button>
+      <button id="fis-lista">Estabelecimentos</button>
+      <label>ID <input type="number" id="fis-id" value="1" style="width:60px"></label>
+      <button id="fis-detalhe">Detalhe do ponto</button>
+    </div>
+    <div class="linha">
+      <input type="text" id="vis-resultado" value="regular" placeholder="resultado" style="width:110px">
+      <input type="text" id="vis-obs" value="Tanque e haste em ordem." placeholder="observações">
+      <button id="fis-vistoria">Registrar vistoria hoje</button>
+    </div>
+    <h2 style="margin-top:14px">5. Página pública (QR) <small>(qualquer um, sem login)</small></h2>
+    <div class="linha">
+      <input type="text" id="slug" value="acai-da-dona-rosa">
+      <button id="pub-ver">Ver como consumidor</button>
+      <button id="pub-qr">Ver com ?origem=qr (conta acesso)</button>
+    </div>
+    <small>Funciona sem login e não mostra nenhum dado de pessoas.</small>
+  </section>
+
+  <section id="log">
+    <div class="linha"><h2 style="margin:0">Respostas da API</h2><button id="limpar">Limpar</button></div>
+    <div id="saida"></div>
+  </section>
+</main>
+<script src="console.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "Oriki — registro do branqueamento",
+  "short_name": "Oriki",
+  "description": "Registro do branqueamento do açaí, para o batedor completar os lotes do dia.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F4F8",
+  "theme_color": "#5B2A6E",
+  "icons": [
+    { "src": "/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icone.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
